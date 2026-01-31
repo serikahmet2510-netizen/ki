@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Аукцион — Топ 7</title>
+  <meta charset="UTF-8">
+  <title>Статус инвестора</title>
+
   <script type="module">
-    // Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBQpb3mSpomljZihoyOlj77a8F99Tm9IFc",
@@ -20,107 +22,125 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const isAdminParam = new URLSearchParams(window.location.search).get('admin') === 'true';
+    const params = new URLSearchParams(location.search);
+    const userId = params.get("user");
+    const isAdminParam = params.get("admin") === "true";
+
+    const ADMIN_PASSWORD = "123456";
     let isAdmin = false;
+    let endTime = null;
 
-    const ADMIN_PASSWORD = '123456'; // поменяй по желанию
-
-    // Запрашиваем пароль у админа
     if (isAdminParam) {
-      const pass = prompt('Введите пароль администратора');
-      if (pass === ADMIN_PASSWORD) isAdmin = true;
+      const p = prompt("Пароль администратора");
+      if (p === ADMIN_PASSWORD) isAdmin = true;
+      else throw new Error("Access denied");
     }
 
-    // Ссылки на элементы
-    window.addEventListener('DOMContentLoaded', () => {
-      window.tableBody = document.getElementById('tableBody');
-      window.timeEl = document.getElementById('time');
-      window.endInput = document.getElementById('endInput');
-      window.saveBtn = document.getElementById('saveEndBtn');
+    window.onload = () => {
+      if (isAdmin) admin.style.display = "block";
 
-      if (isAdmin) document.getElementById('adminControls').style.display='block';
+      if (userId) {
+        const ref = doc(db, "investors", userId);
+        onSnapshot(ref, (snap) => {
+          if (!snap.exists()) {
+            view.innerHTML = "<h1>Данные не найдены</h1>";
+            return;
+          }
+          const d = snap.data();
+          endTime = new Date(d.endTime);
 
-      // Подписка на данные
-      const docRef = doc(db, 'auction', 'top7');
-
-      onSnapshot(docRef, (snapshot) => {
-        const data = snapshot.data() || {places: Array.from({length:7},(_,i)=>({place:i+1,name:''})), endTime: new Date().toISOString()};
-        window.auctionData = data;
-        renderTable();
-        if (!window.endTime) {
-          window.endTime = new Date(data.endTime);
-          if (isAdmin && endInput) endInput.value = window.endTime.toISOString().slice(0,16);
-        }
-      });
-
-      if (isAdmin && saveBtn) {
-        saveBtn.onclick = async () => {
-          const val = endInput.value;
-          if (!val) return;
-          window.endTime = new Date(val);
-          await setDoc(docRef, {places: window.auctionData.places, endTime: window.endTime.toISOString()});
-        }
+          view.innerHTML = `
+            <h1>${d.name}</h1>
+            <p class="status">Квалифицированный инвестор</p>
+          `;
+        });
       }
 
-      setInterval(updateTimer,1000);
-    });
+      setInterval(updateTimer, 1000);
+    };
 
-    function renderTable(){
-      tableBody.innerHTML='';
-      window.auctionData.places.forEach((row,i)=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<td>${row.place}</td>`;
-        if (isAdmin){
-          const td=document.createElement('td');
-          const input=document.createElement('input');
-          input.value=row.name;
-          input.onchange=()=>updateName(i,input.value);
-          td.appendChild(input);
-          tr.appendChild(td);
-        } else {
-          tr.innerHTML += `<td>${row.name}</td>`;
-        }
-        tableBody.appendChild(tr);
+    function updateTimer() {
+      if (!endTime) return;
+      const diff = Math.max(0, endTime - new Date());
+      const h = Math.floor(diff / 36e5);
+      const m = Math.floor(diff % 36e5 / 6e4);
+      const s = Math.floor(diff % 6e4 / 1000);
+      time.textContent = `${h}ч ${m}м ${s}с`;
+      time.style.color = h < 5 ? "red" : "black";
+    }
+
+    window.saveUser = async () => {
+      const id = uid.value;
+      const name = uname.value;
+      const t = endInput.value;
+
+      if (!id || !name || !t) {
+        alert("Заполни все поля");
+        return;
+      }
+
+      await setDoc(doc(db, "investors", id), {
+        name: name,
+        endTime: new Date(t).toISOString()
       });
-    }
 
-    async function updateName(i,val){
-      window.auctionData.places[i].name = val;
-      await setDoc(doc(db, 'auction', 'top7'), window.auctionData);
-    }
-
-    function updateTimer(){
-      if (!window.endTime) return;
-      const now = new Date();
-      let diff = Math.max(0, window.endTime - now);
-      const h = Math.floor(diff/36e5);
-      const m = Math.floor(diff%36e5/6e4);
-      const s = Math.floor(diff%6e4/1000);
-      timeEl.textContent = `${h}ч ${m}м ${s}с`;
-      timeEl.style.color = h<5?'red':'black';
-    }
+      alert(
+        "Сохранено!\nСсылка:\n" +
+        location.origin + location.pathname + "?user=" + id
+      );
+    };
   </script>
+
   <style>
-    body { font-family: Arial; background:#f5f5f5; padding:30px; }
-    h1{text-align:center;}
-    #timer{text-align:center; font-size:24px; margin-bottom:20px;}
-    table{width:60%; margin:0 auto; border-collapse:collapse; background:white;}
-    th,td{border:1px solid #ccc; padding:10px; text-align:center;}
-    th{background:#eee;}
-    .admin input{width:90%;}
-    #adminControls{margin-bottom:20px; text-align:center; display:none;}
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      padding: 40px;
+      text-align: center;
+    }
+    .status {
+      font-size: 22px;
+      color: green;
+      font-weight: bold;
+    }
+    #timer {
+      font-size: 20px;
+      margin: 20px 0;
+    }
+    #admin {
+      display: none;
+      margin-top: 40px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+    }
   </style>
 </head>
 <body>
-<h1>ЛОТ - счет 3619641 и 71721388 (сумма 1 713 229$)</h1>
-<div id="timer">До окончания аукциона: <span id="time"></span></div>
-<div id="adminControls">
-<label>Дата и время окончания аукциона: <input type="datetime-local" id="endInput"></label>
-<button id="saveEndBtn">Сохранить</button>
+
+<div id="timer">
+  До окончания: <span id="time"></span>
 </div>
-<table>
-<thead><tr><th>Место</th><th>Имя</th></tr></thead>
-<tbody id="tableBody"></tbody>
-</table>
+
+<div id="view">
+  <h1>Загрузка…</h1>
+</div>
+
+<div id="admin">
+  <h2>Админ</h2>
+
+  <input id="uid" placeholder="ID (ivan123)">
+  <br>
+  <input id="uname" placeholder="Имя">
+  <br>
+  <input type="datetime-local" id="endInput">
+  <br>
+  <button onclick="saveUser()">Сохранить</button>
+</div>
+
 </body>
 </html>
