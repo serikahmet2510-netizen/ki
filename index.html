@@ -7,7 +7,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
     import {
-      getFirestore, doc, getDoc, setDoc, onSnapshot
+      getFirestore, doc, onSnapshot, setDoc
     } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -37,8 +37,8 @@
     }
 
     window.onload = () => {
-  const admin = document.getElementById("admin");
-  const view = document.getElementById("view");
+      const admin = document.getElementById("admin");
+      const view = document.getElementById("view");
       if (isAdmin) admin.style.display = "block";
 
       if (userId) {
@@ -51,8 +51,10 @@
           const d = snap.data();
           endTime = new Date(d.endTime);
 
+          const fullName = d.firstName && d.lastName ? d.firstName + " " + d.lastName : d.name;
+
           view.innerHTML = `
-            <h1>${d.name}</h1>
+            <h1>${fullName}</h1>
             <p class="status">Квалифицированный инвестор</p>
           `;
         });
@@ -62,36 +64,37 @@
     };
 
     function updateTimer() {
+      const timeEl = document.getElementById("time");
       if (!endTime) return;
       const diff = Math.max(0, endTime - new Date());
       const h = Math.floor(diff / 36e5);
       const m = Math.floor(diff % 36e5 / 6e4);
       const s = Math.floor(diff % 6e4 / 1000);
-      time.textContent = `${h}ч ${m}м ${s}с`;
-      time.style.color = h < 5 ? "red" : "black";
+      timeEl.textContent = `${h}ч ${m}м ${s}с`;
+      timeEl.style.color = h < 5 ? "red" : "black";
     }
 
     window.saveUser = async () => {
-      const id = uid.value;
-      const name = uname.value;
-      const t = endInput.value;
+      const id = document.getElementById("uid").value;
+      const firstName = document.getElementById("fname").value;
+      const lastName = document.getElementById("lname").value;
+      const t = document.getElementById("endInput").value;
 
-      if (!id || !name || !t) {
+      if (!id || !firstName || !lastName || !t) {
         alert("Заполни все поля");
         return;
       }
 
       await setDoc(doc(db, "investors", id), {
-        name: name,
+        firstName: firstName,
+        lastName: lastName,
         endTime: new Date(t).toISOString()
       });
 
-      const link =
-  location.origin + location.pathname + "?user=" + encodeURIComponent(id);
-
-navigator.clipboard.writeText(link).then(() => {
-  alert("Сохранено ✅\nСсылка скопирована:\n\n" + link);
-});
+      const link = location.origin + location.pathname + "?user=" + encodeURIComponent(id);
+      navigator.clipboard.writeText(link).then(() => {
+        alert("Сохранено ✅\nСсылка скопирована:\n\n" + link);
+      });
     };
   </script>
 
@@ -139,7 +142,9 @@ navigator.clipboard.writeText(link).then(() => {
 
   <input id="uid" placeholder="ID (ivan123)">
   <br>
-  <input id="uname" placeholder="Имя">
+  <input id="fname" placeholder="Имя">
+  <br>
+  <input id="lname" placeholder="Фамилия">
   <br>
   <input type="datetime-local" id="endInput">
   <br>
