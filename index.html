@@ -23,7 +23,7 @@
     const db = getFirestore(app);
 
     const params = new URLSearchParams(location.search);
-    const userId = params.get("user");
+    const userId = decodeURIComponent(params.get("user") || "");
     const isAdminParam = params.get("admin") === "true";
 
     const ADMIN_PASSWORD = "123456";
@@ -87,7 +87,7 @@
       });
 
       const link =
-  location.origin + location.pathname + "?user=" + id;
+  location.origin + location.pathname + "?user=" + encodeURIComponent(id);
 
 navigator.clipboard.writeText(link).then(() => {
   alert("Сохранено ✅\nСсылка скопирована:\n\n" + link);
