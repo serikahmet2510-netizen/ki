@@ -115,36 +115,27 @@ window.saveUser = async () => {
 </script>
 
 <style>
-/* ======== ВОДЯНОЙ ЗНАК G4S ПО ВСЕМУ ЭКРАНУ ======== */
 body {
   font-family: Arial;
-  background-color: #f2f2f2;
-  background-image:
-    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
-  background-size: 120px 120px;
+  background: #f2f2f2;
   padding: 30px;
   text-align: center;
   position: relative;
 }
 
-/* Повторяющийся водяной знак текстом */
-body::before {
-  content: "G4S";
+/* ======== ОДИН ВОДЯНОЙ ЗНАК G4S ПО ЦЕНТРУ ======== */
+.watermark {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 200%;
-  height: 200%;
-  font-size: 120px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-20deg);
+  font-size: 180px;
   font-weight: bold;
-  color: rgba(0, 0, 0, 0.04);
-  transform: rotate(-20deg) translate(-25%, -25%);
+  color: rgba(0, 0, 0, 0.05);
   pointer-events: none;
   z-index: -1;
-  letter-spacing: 60px;
-  line-height: 160px;
-  white-space: pre;
+  letter-spacing: 8px;
+  font-family: Arial, sans-serif;
 }
 
 /* ======== КАРТОЧКА ======== */
@@ -196,6 +187,8 @@ body::before {
 </head>
 
 <body>
+
+<div class="watermark">G4S</div>
 
 <div id="view">
   <h1>Загрузка…</h1>
