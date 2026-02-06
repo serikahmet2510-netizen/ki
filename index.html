@@ -1,153 +1,243 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Статус инвестора</title>
+<meta charset="UTF-8">
+<title>G4S Инкассационная доставка</title>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import {
-      getFirestore, doc, onSnapshot, setDoc
-    } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY"></script>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBQpb3mSpomljZihoyOlj77a8F99Tm9IFc",
-      authDomain: "auction-top7.firebaseapp.com",
-      projectId: "auction-top7",
-      storageBucket: "auction-top7.firebasestorage.app",
-      messagingSenderId: "73096110012",
-      appId: "1:73096110012:web:8f014f6faae5d08bd455b9"
-    };
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+const firebaseConfig = {
+  apiKey: "AIzaSyBQpb3mSpomljZihoyOlj77a8F99Tm9IFc",
+  authDomain: "auction-top7.firebaseapp.com",
+  projectId: "auction-top7",
+  storageBucket: "auction-top7.firebasestorage.app",
+  messagingSenderId: "73096110012",
+  appId: "1:73096110012:web:8f014f6faae5d08bd455b9"
+};
 
-    const params = new URLSearchParams(location.search);
-    const userId = decodeURIComponent(params.get("user") || "");
-    const isAdminParam = params.get("admin") === "true";
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    const ADMIN_PASSWORD = "123456";
-    let isAdmin = false;
-    let endTime = null;
+const params = new URLSearchParams(location.search);
+const isAdminParam = params.get("admin") === "true";
 
-    if (isAdminParam) {
-      const p = prompt("Пароль администратора");
-      if (p === ADMIN_PASSWORD) isAdmin = true;
-      else throw new Error("Access denied");
-    }
+const pathParts = location.pathname.split("/").filter(Boolean);
+const userId = pathParts.length > 1 ? decodeURIComponent(pathParts[1]) : "";
 
-    window.onload = () => {
-      const admin = document.getElementById("admin");
-      const view = document.getElementById("view");
-      if (isAdmin) admin.style.display = "block";
+const ADMIN_PASSWORD = "123456";
+let isAdmin = false;
+let endTime = null;
+let map, marker;
 
-      if (userId) {
-        const ref = doc(db, "investors", userId);
-        onSnapshot(ref, (snap) => {
-          if (!snap.exists()) {
-            view.innerHTML = "<h1>Данные не найдены</h1>";
-            return;
-          }
-          const d = snap.data();
-          endTime = new Date(d.endTime);
+if (isAdminParam) {
+  const p = prompt("Пароль администратора");
+  if (p === ADMIN_PASSWORD) isAdmin = true;
+  else throw new Error("Access denied");
+}
 
-          const fullName = d.firstName && d.lastName ? d.firstName + " " + d.lastName : d.name;
+window.onload = () => {
+  const admin = document.getElementById("admin");
+  const view = document.getElementById("view");
 
-          view.innerHTML = `
-            <h1>${fullName}</h1>
-            <p class="status">Квалифицированный инвестор</p>
-          `;
-        });
-      }
+  if (isAdmin) admin.style.display = "block";
 
-      setInterval(updateTimer, 1000);
-    };
+  if (userId) {
+    const ref = doc(db, "investors", userId);
 
-    function updateTimer() {
-      const timeEl = document.getElementById("time");
-      if (!endTime) return;
-      const diff = Math.max(0, endTime - new Date());
-      const h = Math.floor(diff / 36e5);
-      const m = Math.floor(diff % 36e5 / 6e4);
-      const s = Math.floor(diff % 6e4 / 1000);
-      timeEl.textContent = `${h}ч ${m}м ${s}с`;
-      timeEl.style.color = h < 5 ? "red" : "black";
-    }
-
-    window.saveUser = async () => {
-      const id = document.getElementById("uid").value;
-      const firstName = document.getElementById("fname").value;
-      const lastName = document.getElementById("lname").value;
-      const t = document.getElementById("endInput").value;
-
-      if (!id || !firstName || !lastName || !t) {
-        alert("Заполни все поля");
+    onSnapshot(ref, (snap) => {
+      if (!snap.exists()) {
+        view.innerHTML = "<h1>Данные не найдены</h1>";
         return;
       }
 
-      await setDoc(doc(db, "investors", id), {
-        firstName: firstName,
-        lastName: lastName,
-        endTime: new Date(t).toISOString()
-      });
+      const d = snap.data();
+      endTime = new Date(d.endTime);
 
-      const link = location.origin + location.pathname + "?user=" + encodeURIComponent(id);
-      navigator.clipboard.writeText(link).then(() => {
-        alert("Сохранено ✅\nСсылка скопирована:\n\n" + link);
-      });
-    };
-  </script>
+      view.innerHTML = `
+        <div class="card">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/6/6a/G4S_logo.svg" class="logo">
 
-  <style>
-    body {
-      font-family: Arial;
-      background: #f5f5f5;
-      padding: 40px;
-      text-align: center;
-    }
-    .status {
-      font-size: 22px;
-      color: green;
-      font-weight: bold;
-    }
-    #timer {
-      font-size: 20px;
-      margin: 20px 0;
-    }
-    #admin {
-      display: none;
-      margin-top: 40px;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-    }
-    input, button {
-      padding: 8px;
-      margin: 5px;
-    }
-  </style>
+          <h1>ИНКАССАЦИОННАЯ ДОСТАВКА</h1>
+
+          <h3>ФИО:</h3>
+          <p class="fio">${d.name}</p>
+
+          <h3>Статус:</h3>
+          <p class="status ${d.status}">${d.status}</p>
+
+          <h3>Примерное время прибытия:</h3>
+          <p id="time" class="timer">--:--:--</p>
+
+          <h3>Информация о доставке:</h3>
+          <div class="info-box">${d.info.replace(/\n/g, "<br>")}</div>
+
+          <div id="map"></div>
+        </div>
+      `;
+
+      initMap(d.lat, d.lng);
+    });
+  }
+
+  setInterval(updateTimer, 1000);
+};
+
+function initMap(lat = 43.238949, lng = 76.889709) {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat, lng },
+    zoom: 14
+  });
+
+  marker = new google.maps.Marker({
+    position: { lat, lng },
+    map: map,
+    title: "Инкассация в пути"
+  });
+}
+
+function updateTimer() {
+  if (!endTime) return;
+  const diff = Math.max(0, endTime - new Date());
+  const h = Math.floor(diff / 36e5);
+  const m = Math.floor(diff % 36e5 / 6e4);
+  const s = Math.floor(diff % 6e4 / 1000);
+
+  const timeEl = document.getElementById("time");
+  if (timeEl) {
+    timeEl.textContent = `${h}ч ${m}м ${s}с`;
+    timeEl.style.color = h < 5 ? "red" : "black";
+  }
+}
+
+window.saveUser = async () => {
+  const id = uid.value;
+  const name = uname.value;
+  const t = endInput.value;
+  const info = uinfo.value;
+  const status = ustatus.value;
+  const lat = parseFloat(ulat.value);
+  const lng = parseFloat(ulng.value);
+
+  if (!id || !name || !t) {
+    alert("Заполни ID, ФИО и время");
+    return;
+  }
+
+  await setDoc(doc(db, "investors", id), {
+    name: name,
+    endTime: new Date(t).toISOString(),
+    info: info || "—",
+    status: status,
+    lat: lat,
+    lng: lng
+  });
+
+  const link = location.origin + "/KI/" + encodeURIComponent(id);
+
+  navigator.clipboard.writeText(link).then(() => {
+    alert("Сохранено ✅\nСсылка скопирована:\n\n" + link);
+  });
+};
+</script>
+
+<style>
+body {
+  font-family: Arial;
+  background: #e6e6e6;
+  padding: 30px;
+  text-align: center;
+}
+
+.card {
+  background: white;
+  max-width: 700px;
+  margin: auto;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.logo {
+  width: 120px;
+  margin-bottom: 10px;
+}
+
+.fio {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.status {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.В.пути { color: green; }
+.Задержка { color: orange; }
+.Прибыл { color: blue; }
+
+.timer {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.info-box {
+  background: #f3f3f3;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  text-align: left;
+}
+
+#map {
+  width: 100%;
+  height: 300px;
+  border-radius: 8px;
+}
+
+#admin {
+  display: none;
+  margin-top: 30px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
 </head>
-<body>
 
-<div id="timer">
-  До окончания: <span id="time"></span>
-</div>
+<body>
 
 <div id="view">
   <h1>Загрузка…</h1>
 </div>
 
 <div id="admin">
-  <h2>Админ</h2>
+  <h2>Админ-панель G4S</h2>
 
-  <input id="uid" placeholder="ID (ivan123)">
-  <br>
-  <input id="fname" placeholder="Имя">
-  <br>
-  <input id="lname" placeholder="Фамилия">
-  <br>
+  <input id="uid" placeholder="ID (tuman)">
+  <input id="uname" placeholder="ФИО">
   <input type="datetime-local" id="endInput">
-  <br>
+
+  <select id="ustatus">
+    <option>В пути</option>
+    <option>Задержка</option>
+    <option>Прибыл</option>
+  </select>
+
+  <input id="ulat" placeholder="Широта (lat)">
+  <input id="ulng" placeholder="Долгота (lng)">
+
+  <textarea id="uinfo" rows="5" placeholder="Информация о доставке"></textarea>
+
   <button onclick="saveUser()">Сохранить</button>
 </div>
 
