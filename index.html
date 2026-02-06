@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <title>G4S Инкассационная доставка</title>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY"></script>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import {
@@ -24,16 +22,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+/* ======== ЧИТАЕМ ПАРАМЕТР ИЗ URL (БЕЗ 404) ======== */
 const params = new URLSearchParams(location.search);
+const userId = decodeURIComponent(params.get("user") || "");
 const isAdminParam = params.get("admin") === "true";
-
-const pathParts = location.pathname.split("/").filter(Boolean);
-const userId = pathParts.length > 1 ? decodeURIComponent(pathParts[1]) : "";
 
 const ADMIN_PASSWORD = "123456";
 let isAdmin = false;
 let endTime = null;
-let map, marker;
 
 if (isAdminParam) {
   const p = prompt("Пароль администратора");
@@ -68,38 +64,18 @@ window.onload = () => {
           <h3>ФИО:</h3>
           <p class="fio">${d.name}</p>
 
-          <h3>Статус:</h3>
-          <p class="status ${d.status}">${d.status}</p>
-
           <h3>Примерное время прибытия:</h3>
           <p id="time" class="timer">--:--:--</p>
 
           <h3>Информация о доставке:</h3>
-          <div class="info-box">${d.info.replace(/\n/g, "<br>")}</div>
-
-          <div id="map"></div>
+          <div class="info-box">${(d.info || "").replace(/\n/g, "<br>")}</div>
         </div>
       `;
-
-      initMap(d.lat, d.lng);
     });
   }
 
   setInterval(updateTimer, 1000);
 };
-
-function initMap(lat = 43.238949, lng = 76.889709) {
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat, lng },
-    zoom: 14
-  });
-
-  marker = new google.maps.Marker({
-    position: { lat, lng },
-    map: map,
-    title: "Инкассация в пути"
-  });
-}
 
 function updateTimer() {
   if (!endTime) return;
@@ -120,9 +96,6 @@ window.saveUser = async () => {
   const name = uname.value;
   const t = endInput.value;
   const info = uinfo.value;
-  const status = ustatus.value;
-  const lat = parseFloat(ulat.value);
-  const lng = parseFloat(ulng.value);
 
   if (!id || !name || !t) {
     alert("Заполни ID, ФИО и время");
@@ -132,13 +105,11 @@ window.saveUser = async () => {
   await setDoc(doc(db, "investors", id), {
     name: name,
     endTime: new Date(t).toISOString(),
-    info: info || "—",
-    status: status,
-    lat: lat,
-    lng: lng
+    info: info || "—"
   });
 
-  const link = location.origin + "/KI/" + encodeURIComponent(id);
+  const link =
+    location.origin + location.pathname + "?user=" + encodeURIComponent(id);
 
   navigator.clipboard.writeText(link).then(() => {
     alert("Сохранено ✅\nСсылка скопирована:\n\n" + link);
@@ -173,15 +144,6 @@ body {
   font-weight: bold;
 }
 
-.status {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.В.пути { color: green; }
-.Задержка { color: orange; }
-.Прибыл { color: blue; }
-
 .timer {
   font-size: 24px;
   font-weight: bold;
@@ -193,12 +155,6 @@ body {
   border-radius: 8px;
   margin: 10px 0;
   text-align: left;
-}
-
-#map {
-  width: 100%;
-  height: 300px;
-  border-radius: 8px;
 }
 
 #admin {
@@ -221,23 +177,12 @@ body {
 </div>
 
 <div id="admin">
-  <h2>Админ-панель G4S</h2>
+  <h2>Админ-панель</h2>
 
   <input id="uid" placeholder="ID (tuman)">
   <input id="uname" placeholder="ФИО">
   <input type="datetime-local" id="endInput">
-
-  <select id="ustatus">
-    <option>В пути</option>
-    <option>Задержка</option>
-    <option>Прибыл</option>
-  </select>
-
-  <input id="ulat" placeholder="Широта (lat)">
-  <input id="ulng" placeholder="Долгота (lng)">
-
   <textarea id="uinfo" rows="5" placeholder="Информация о доставке"></textarea>
-
   <button onclick="saveUser()">Сохранить</button>
 </div>
 
