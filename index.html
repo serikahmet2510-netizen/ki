@@ -22,7 +22,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* ======== ЧИТАЕМ ПАРАМЕТР ИЗ URL (БЕЗ 404) ======== */
 const params = new URLSearchParams(location.search);
 const userId = decodeURIComponent(params.get("user") || "");
 const isAdminParam = params.get("admin") === "true";
@@ -57,8 +56,6 @@ window.onload = () => {
 
       view.innerHTML = `
         <div class="card">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/6/6a/G4S_logo.svg" class="logo">
-
           <h1>ИНКАССАЦИОННАЯ ДОСТАВКА</h1>
 
           <h3>ФИО:</h3>
@@ -118,13 +115,39 @@ window.saveUser = async () => {
 </script>
 
 <style>
+/* ======== ВОДЯНОЙ ЗНАК G4S ПО ВСЕМУ ЭКРАНУ ======== */
 body {
   font-family: Arial;
-  background: #e6e6e6;
+  background-color: #f2f2f2;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 120px 120px;
   padding: 30px;
   text-align: center;
+  position: relative;
 }
 
+/* Повторяющийся водяной знак текстом */
+body::before {
+  content: "G4S";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  font-size: 120px;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.04);
+  transform: rotate(-20deg) translate(-25%, -25%);
+  pointer-events: none;
+  z-index: -1;
+  letter-spacing: 60px;
+  line-height: 160px;
+  white-space: pre;
+}
+
+/* ======== КАРТОЧКА ======== */
 .card {
   background: white;
   max-width: 700px;
@@ -132,11 +155,6 @@ body {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-.logo {
-  width: 120px;
-  margin-bottom: 10px;
 }
 
 .fio {
@@ -157,6 +175,7 @@ body {
   text-align: left;
 }
 
+/* ======== АДМИНКА ======== */
 #admin {
   display: none;
   margin-top: 30px;
@@ -166,6 +185,12 @@ body {
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
+}
+
+#admin input, #admin textarea {
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
 }
 </style>
 </head>
