@@ -115,7 +115,7 @@ window.saveUser = async () => {
 </script>
 
 <style>
-/* ======== ФОН: СЕТКА И G4S В КАЖДОМ КВАДРАТЕ ======== */
+/* ======== ФОН: МНОГО МАЛЕНЬКИХ G4S ПО ВСЕМУ ЭКРАНУ ======== */
 body {
   font-family: Arial;
   background-color: #f2f2f2;
@@ -124,7 +124,7 @@ body {
   position: relative;
 }
 
-/* Повторяющийся фон с G4S в каждом квадрате */
+/* Повторяющийся маленький водяной знак */
 body::before {
   content: "G4S";
   position: fixed;
@@ -132,14 +132,14 @@ body::before {
   left: 0;
   width: 200%;
   height: 200%;
-  font-size: 48px;              /* размер надписи в каждом квадрате */
+  font-size: 26px;              /* СДЕЛАЛ МЕНЬШЕ */
   font-weight: bold;
-  color: rgba(0, 0, 0, 0.05);   /* очень слабая прозрачность */
+  color: rgba(0, 0, 0, 0.04);   /* СЛАБАЯ ПРОЗРАЧНОСТЬ */
   transform: rotate(-20deg);
   pointer-events: none;
   z-index: -1;
-  letter-spacing: 120px;        /* расстояние между надписями по горизонтали */
-  line-height: 140px;           /* расстояние между строками */
+  letter-spacing: 120px;        /* расстояние между знаками */
+  line-height: 100px;           /* расстояние по вертикали */
   white-space: pre;
 }
 
