@@ -115,27 +115,32 @@ window.saveUser = async () => {
 </script>
 
 <style>
+/* ======== ФОН: СЕТКА И G4S В КАЖДОМ КВАДРАТЕ ======== */
 body {
   font-family: Arial;
-  background: #f2f2f2;
+  background-color: #f2f2f2;
   padding: 30px;
   text-align: center;
   position: relative;
 }
 
-/* ======== ОДИН ВОДЯНОЙ ЗНАК G4S ПО ЦЕНТРУ ======== */
-.watermark {
+/* Повторяющийся фон с G4S в каждом квадрате */
+body::before {
+  content: "G4S";
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(-20deg);
-  font-size: 180px;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  font-size: 48px;              /* размер надписи в каждом квадрате */
   font-weight: bold;
-  color: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.05);   /* очень слабая прозрачность */
+  transform: rotate(-20deg);
   pointer-events: none;
   z-index: -1;
-  letter-spacing: 8px;
-  font-family: Arial, sans-serif;
+  letter-spacing: 120px;        /* расстояние между надписями по горизонтали */
+  line-height: 140px;           /* расстояние между строками */
+  white-space: pre;
 }
 
 /* ======== КАРТОЧКА ======== */
@@ -187,8 +192,6 @@ body {
 </head>
 
 <body>
-
-<div class="watermark">G4S</div>
 
 <div id="view">
   <h1>Загрузка…</h1>
